@@ -29,9 +29,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <Ethernet.h>
-#include <EthernetClient.h>
-#include <EthernetServer.h>
+// #include <UIPEthernet.h>
+// #include <UIPEthernetClient.h>
+// #include <UIPEthernetServer.h>
 
 /********************************************************************
  * CONFIGURATION
@@ -80,42 +80,6 @@
 #ifndef WEBDUINO_OUTPUT_BUFFER_SIZE
 #define WEBDUINO_OUTPUT_BUFFER_SIZE 32
 #endif // WEBDUINO_OUTPUT_BUFFER_SIZE
-
-// add '#define WEBDUINO_FAVICON_DATA ""' to your application
-// before including WebServer.h to send a null file as the favicon.ico file
-// otherwise this defaults to a 16x16 px black diode on blue ground
-// (or include your own icon if you like)
-#ifndef WEBDUINO_FAVICON_DATA
-#define WEBDUINO_FAVICON_DATA { 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x10, \
-                                0x10, 0x02, 0x00, 0x01, 0x00, 0x01, 0x00, \
-                                0xb0, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, \
-                                0x00, 0x28, 0x00, 0x00, 0x00, 0x10, 0x00, \
-                                0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x01, \
-                                0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                                0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, \
-                                0xff, 0xff, 0x00, 0x00, 0xff, 0xff, 0x00, \
-                                0x00, 0xff, 0xff, 0x00, 0x00, 0xcf, 0xbf, \
-                                0x00, 0x00, 0xc7, 0xbf, 0x00, 0x00, 0xc3, \
-                                0xbf, 0x00, 0x00, 0xc1, 0xbf, 0x00, 0x00, \
-                                0xc0, 0xbf, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                                0x00, 0xc0, 0xbf, 0x00, 0x00, 0xc1, 0xbf, \
-                                0x00, 0x00, 0xc3, 0xbf, 0x00, 0x00, 0xc7, \
-                                0xbf, 0x00, 0x00, 0xcf, 0xbf, 0x00, 0x00, \
-                                0xff, 0xff, 0x00, 0x00, 0xff, 0xff, 0x00, \
-                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-                                0x00, 0x00 }
-#endif // #ifndef WEBDUINO_FAVICON_DATA
 
 // add "#define WEBDUINO_SERIAL_DEBUGGING 1" to your application
 // before including WebServer.h to have incoming requests logged to
@@ -230,14 +194,6 @@ public:
   // output raw data stored in program memory
   void writeP(const unsigned char *data, size_t length);
 
-  // output HTML for a radio button
-  void radioButton(const char *name, const char *val,
-                   const char *label, bool selected);
-
-  // output HTML for a checkbox
-  void checkBox(const char *name, const char *val,
-                const char *label, bool selected);
-
   // returns next character or -1 if we're at end-of-stream
   int read();
 
@@ -350,8 +306,6 @@ private:
 
   static void defaultFailCmd(WebServer &server, ConnectionType type,
                              char *url_tail, bool tail_complete);
-  void noRobots(ConnectionType type);
-  void favicon(ConnectionType type);
 };
 
 /* define this macro if you want to include the header in a sketch source
@@ -609,15 +563,6 @@ void WebServer::processConnection(char *buff, int *bufflen)
 #if WEBDUINO_SERIAL_DEBUGGING > 1
       Serial.println("*** headers complete ***");
 #endif
-
-      if (strcmp(buff, "/robots.txt") == 0)
-      {
-        noRobots(requestType);
-      }
-      else if (strcmp(buff, "/favicon.ico") == 0)
-      {
-        favicon(requestType);
-      }
     }
     // Only try to dispatch command if request type and prefix are correct.
     // Fix by quarencia.
@@ -674,25 +619,6 @@ void WebServer::defaultFailCmd(WebServer &server,
   server.httpFail();
 }
 
-void WebServer::noRobots(ConnectionType type)
-{
-  httpSuccess("text/plain");
-  if (type != HEAD)
-  {
-    P(allowNoneMsg) = "User-agent: *" CRLF "Disallow: /" CRLF;
-    printP(allowNoneMsg);
-  }
-}
-
-void WebServer::favicon(ConnectionType type)
-{
-  httpSuccess("image/x-icon","Cache-Control: max-age=31536000\r\n");
-  if (type != HEAD)
-  {
-    P(faviconIco) = WEBDUINO_FAVICON_DATA;
-    writeP(faviconIco, sizeof(faviconIco));
-  }
-}
 
 void WebServer::httpUnauthorized()
 {
@@ -1273,43 +1199,6 @@ void WebServer::processHeaders()
   }
 }
 
-void WebServer::outputCheckboxOrRadio(const char *element, const char *name,
-                                      const char *val, const char *label,
-                                      bool selected)
-{
-  P(cbPart1a) = "<label><input type='";
-  P(cbPart1b) = "' name='";
-  P(cbPart2) = "' value='";
-  P(cbPart3) = "' ";
-  P(cbChecked) = "checked ";
-  P(cbPart4) = "/> ";
-  P(cbPart5) = "</label>";
-
-  printP(cbPart1a);
-  print(element);
-  printP(cbPart1b);
-  print(name);
-  printP(cbPart2);
-  print(val);
-  printP(cbPart3);
-  if (selected)
-    printP(cbChecked);
-  printP(cbPart4);
-  print(label);
-  printP(cbPart5);
-}
-
-void WebServer::checkBox(const char *name, const char *val,
-                         const char *label, bool selected)
-{
-  outputCheckboxOrRadio("checkbox", name, val, label, selected);
-}
-
-void WebServer::radioButton(const char *name, const char *val,
-                            const char *label, bool selected)
-{
-  outputCheckboxOrRadio("radio", name, val, label, selected);
-}
 
 uint8_t WebServer::available(){
   return m_server.available();
